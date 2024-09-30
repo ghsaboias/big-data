@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BTC/USD Analysis Dashboard</title>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+    <h1>BTC/USD Analysis Dashboard</h1>
+    <div id="loading">Loading...</div>
+    <div id="error" style="display:none;"></div>
+    <div id="dashboard" style="display:none;">
+        <div id="price-chart"></div>
+        <div id="returns-histogram"></div>
+        <div id="qq-plot"></div>
+        <div id="volatility-clustering"></div>
+        <div id="power-law-plot"></div>
+        <div id="multiscale-plot"></div>
+        <div id="stats"></div>
+    </div>
+    <script src="/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,41 @@
+body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 20px;
+}
+
+.dashboard {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+}
+
+.chart {
+    width: 100%;
+    height: 400px;
+    min-height: 400px;
+    border: 1px solid #ccc;
+}
+
+.stats {
+    grid-column: span 2;
+}
+
+ul {
+    list-style-type: none;
+    padding: 0;
+}
+
+li {
+    margin-bottom: 5px;
+}
+
+.loading, .error {
+    text-align: center;
+    font-size: 18px;
+    margin-top: 20px;
+}
+
+.error {
+    color: red;
+}
