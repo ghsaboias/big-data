@@ -39,40 +39,16 @@ function displayTodayReturn(todayComparison) {
     const direction = todayComparison.direction === 'up' ? '▲' : '▼';
     const color = todayComparison.direction === 'up' ? '#28a745' : '#dc3545';
     
-    const sanityCheck = todayComparison.sanity_check;
-    
     element.innerHTML = `
-        <span style="color: ${color}; font-size: 18px; font-weight: bold;">${direction} ${returnPercentage.toFixed(2)}%</span>
-        <span style="font-size: 16px;">BTC: $${todayComparison.latest_price.toFixed(2)}</span>
-        <span style="font-size: 14px;">Percentile: ${todayComparison.percentile.toFixed(2)}%</span>
-        <span class="info-icon" onclick="toggleSanityCheck(this)">ⓘ</span>
-        <div class="sanity-check-dropdown">
-            <p>Return Distribution (1 Year)</p>
-            <p>Today's log return: ${todayComparison.today_return.toFixed(6)}</p>
-            <p>Historical range: ${sanityCheck.min_return.toFixed(6)} to ${sanityCheck.max_return.toFixed(6)}</p>
-            <p>Median: ${sanityCheck.median_return.toFixed(6)}</p>
-            <p>Positive returns:</p>
-            <p>- 10th percentile: ${sanityCheck.positive_returns_10th_percentile.toFixed(6)}</p>
-            <p>- 90th percentile: ${sanityCheck.positive_returns_90th_percentile.toFixed(6)}</p>
-            <p>Negative returns:</p>
-            <p>- 10th percentile: ${sanityCheck.negative_returns_10th_percentile.toFixed(6)}</p>
-            <p>- 90th percentile: ${sanityCheck.negative_returns_90th_percentile.toFixed(6)}</p>
-            <p>Rank: ${sanityCheck.rank} out of ${sanityCheck.total_days} ${sanityCheck.comparison_type} days</p>
-            <p>Largest ${sanityCheck.comparison_type} return in past year: ${sanityCheck.largest_return.toFixed(6)}</p>
-            <p>Ratio to largest ${sanityCheck.comparison_type} return: ${sanityCheck.ratio_to_largest.toFixed(2)}</p>
-            <p>Larger than 90% of ${sanityCheck.comparison_type} returns: ${sanityCheck.larger_than_90_percent ? 'Yes' : 'No'}</p>
+    <div style="display: flex; align-items: center; justify-content: center; gap: 10px">
+        <div style="display: flex; align-items: center;">
+            <span style="font-size: 14px;">Previous Close: $${todayComparison.yesterday_close.toFixed(2)}</span>
+            <span style="font-size: 14px; margin-left: 10px;">Current Price: $${todayComparison.latest_price.toFixed(2)}</span>
         </div>
+        <span style="color: ${color}; font-size: 18px; font-weight: bold;">${direction} ${returnPercentage.toFixed(2)}%</span>
+        <span style="font-size: 14px; margin-left: 10px;">Percentile: ${todayComparison.percentile.toFixed(2)}%</span>
+    </div>
     `;
-}
-
-// Function to toggle the sanity check dropdown
-function toggleSanityCheck(icon) {
-    const dropdown = icon.nextElementSibling;
-    if (dropdown.style.display === 'none' || dropdown.style.display === '') {
-        dropdown.style.display = 'block';
-    } else {
-        dropdown.style.display = 'none';
-    }
 }
 
 // Function to hide the error message
@@ -178,20 +154,3 @@ function displayReturnTable(returnData) {
     });
     updateTable();
 }
-
-// Add this function call at the end of the file
-document.addEventListener('DOMContentLoaded', function() {
-    // ... existing code ...
-    
-    // Close sanity check dropdown when clicking outside
-    document.addEventListener('click', function(event) {
-        if (!event.target.matches('.info-icon')) {
-            const dropdowns = document.getElementsByClassName('sanity-check-dropdown');
-            for (let i = 0; i < dropdowns.length; i++) {
-                if (dropdowns[i].style.display === 'block') {
-                    dropdowns[i].style.display = 'none';
-                }
-            }
-        }
-    });
-});

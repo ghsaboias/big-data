@@ -48,44 +48,6 @@ main {
     color: #0056b3;
 }
 
-.sanity-check-dropdown {
-    display: none;
-    position: absolute;
-    background-color: #2a2a2a;
-    min-width: 280px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
-    padding: 15px;
-    z-index: 1000;
-    border-radius: 8px;
-    font-size: 14px;
-    right: 0;
-    top: 100%;
-    margin-top: 10px;
-    border: 1px solid #333333;
-}
-
-.sanity-check-dropdown::before {
-    content: '';
-    position: absolute;
-    top: -8px;
-    right: 15px;
-    border-left: 8px solid transparent;
-    border-right: 8px solid transparent;
-    border-bottom: 8px solid #2a2a2a;
-}
-
-.sanity-check-dropdown p {
-    margin: 8px 0;
-    line-height: 1.4;
-}
-
-.sanity-check-dropdown p:first-child {
-    font-weight: bold;
-    border-bottom: 1px solid #333333;
-    padding-bottom: 8px;
-    margin-bottom: 12px;
-}
-
 #todays-return {
     position: relative;
     display: inline-flex;

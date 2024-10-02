@@ -17,7 +17,7 @@ from statsmodels.tools.sm_exceptions import InterpolationWarning
 import warnings
 import requests
 import math
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import time
 from requests.exceptions import RequestException
 import pickle
@@ -292,52 +292,56 @@ def get_latest_price():
         return df['hourly']['close'].iloc[-1]
 
 def get_todays_return():
-    now = datetime.now()
+    now = datetime.now(timezone.utc)
     today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    yesterday = today_start - timedelta(days=1)
     
     latest_price = get_latest_price()
     
-    # Get the closing price from yesterday
-    yesterday_close = df['hourly']['close'].loc[:today_start].iloc[-1]
+    # Get the closing price from yesterday in UTC
+    yesterday_close = df['daily']['close'].loc[yesterday.strftime('%Y-%m-%d')]
+    
+    # If yesterday's data is not available, use the last available close price
+    if pd.isna(yesterday_close):
+        last_available_date = df['daily']['close'].index[-1]
+        yesterday_close = df['daily']['close'].iloc[-1]
+        yesterday = last_available_date
+    else:
+        last_available_date = yesterday
     
     today_return = np.log(latest_price / yesterday_close)
     
-    # Add logging
-    app.logger.info(f"Today's calculation: latest_price={latest_price}, yesterday_close={yesterday_close}, return={today_return}")
+    app.logger.info(f"UTC now: {now}")
+    app.logger.info(f"Yesterday date: {yesterday}")
+    app.logger.info(f"Last available date: {last_available_date}")
+    app.logger.info(f"Yesterday close: {yesterday_close}")
+    app.logger.info(f"Latest price: {latest_price}")
+    app.logger.info(f"Today's return: {today_return}")
     
-    return today_return
-
-def find_return_rank(returns, today_return):
-    # Sort returns in descending order of absolute value
-    sorted_returns = returns.abs().sort_values(ascending=False)
-    
-    # Find the rank of today's return
-    abs_today_return = abs(today_return)
-    if abs_today_return > sorted_returns.max():
-        rank = 1
-    elif abs_today_return < sorted_returns.min():
-        rank = len(sorted_returns)
-    else:
-        rank = sorted_returns.index.get_loc(sorted_returns.index[sorted_returns >= abs_today_return][0]) + 1
-    
-    return rank, len(sorted_returns)
+    return {
+        'today_return': today_return,
+        'latest_price': latest_price,
+        'yesterday_close': yesterday_close,
+        'yesterday_date': yesterday.strftime('%Y-%m-%d'),
+        'last_available_date': last_available_date.strftime('%Y-%m-%d'),
+        'current_utc_time': now.strftime('%Y-%m-%d %H:%M:%S UTC')
+    }
 
 def compare_todays_return(returns):
-    today_return = get_todays_return()
+    today_return_data = get_todays_return()
+    today_return = today_return_data['today_return']
     
     # Create a 365-day rolling window
-    end_date = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+    end_date = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0) - timedelta(days=1)
     start_date = end_date - timedelta(days=365)
     
     # Ensure we have data for the full 365-day period
     if start_date < returns.index[0]:
         start_date = returns.index[0]
-        app.logger.warning(f"Not enough historical data for a full 365-day window. Using data from {start_date} to {end_date}")
     
     rolling_window = returns.loc[start_date:end_date]
     
     if rolling_window.empty:
-        app.logger.warning("Rolling window is empty, using all available returns")
         rolling_window = returns
     
     # Separate positive and negative returns
@@ -359,37 +363,14 @@ def compare_todays_return(returns):
     # Compare to largest return
     ratio_to_largest = abs(today_return) / abs(largest_return)
     
-    # Add these debug lines
-    app.logger.info(f"Rolling window start: {rolling_window.index.min()}, end: {rolling_window.index.max()}")
-    app.logger.info(f"Rolling window shape: {rolling_window.shape}")
-    app.logger.info(f"Positive returns range: {positive_returns.min()} to {positive_returns.max()}")
-    app.logger.info(f"Negative returns range: {negative_returns.min()} to {negative_returns.max()}")
-    app.logger.info(f"Today's return: {today_return}")
-    app.logger.info(f"Today's return rank: {rank} out of {total_days} {'positive' if today_return > 0 else 'negative'} days")
-    app.logger.info(f"Largest {'positive' if today_return > 0 else 'negative'} return: {largest_return}")
-    app.logger.info(f"Ratio to largest return: {ratio_to_largest}")
-    
     return {
         'today_return': float(today_return),
         'percentile': float(percentile),
         'direction': 'up' if today_return > 0 else 'down',
-        'latest_price': get_latest_price(),
-        'sanity_check': {
-            'min_return': float(rolling_window.min()),
-            'max_return': float(rolling_window.max()),
-            'median_return': float(rolling_window.median()),
-            'positive_returns_10th_percentile': float(positive_returns.quantile(0.1)),
-            'positive_returns_90th_percentile': float(positive_returns.quantile(0.9)),
-            'negative_returns_10th_percentile': float(negative_returns.quantile(0.1)),
-            'negative_returns_90th_percentile': float(negative_returns.quantile(0.9)),
-            'rank': int(rank),
-            'total_days': int(total_days),
-            'is_largest': rank == 1,
-            'larger_than_90_percent': rank <= total_days // 10,
-            'comparison_type': 'positive' if today_return > 0 else 'negative',
-            'largest_return': float(largest_return),
-            'ratio_to_largest': float(ratio_to_largest)
-        }
+        'latest_price': today_return_data['latest_price'],
+        'yesterday_close': today_return_data['yesterday_close'],
+        'yesterday_date': today_return_data['yesterday_date'],
+        'last_available_date': today_return_data['last_available_date'],
     }
 
 def get_return_data():
@@ -502,9 +483,6 @@ def get_api_data():
         
         app.logger.info("API data successfully generated")
         data_to_return = replace_nan_with_none(stats_data)
-        
-        # Log the final data structure
-        app.logger.info(f"Final data structure: {json.dumps(data_to_return, cls=NpEncoder)}")
         
         return json.dumps(data_to_return, cls=NpEncoder)
     except Exception as e:
